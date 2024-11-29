@@ -8,3 +8,7 @@
 /PA7-1.zip
 /assignment8.zip
 /pa0.zip
+# 忽略 CMake 配置文件
+CMakeLists.txt
+# 忽略 CMake 构建目录
+build/
