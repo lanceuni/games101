@@ -1,3 +1,0 @@
-/media/lxy/work/share/games101/Assignment1/Assignment1/build/CMakeFiles/Rasterizer.dir
-/media/lxy/work/share/games101/Assignment1/Assignment1/build/CMakeFiles/edit_cache.dir
-/media/lxy/work/share/games101/Assignment1/Assignment1/build/CMakeFiles/rebuild_cache.dir
