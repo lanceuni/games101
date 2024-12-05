@@ -6,13 +6,20 @@
 
 constexpr double MY_PI = 3.1415926;
 
+// 该函数用于获取视图矩阵，视图矩阵用于将场景中的物体从世界坐标系转换到视图坐标系。
+// 输入参数 eye_pos 是一个三维向量，表示观察者的位置。
+// 函数首先创建一个单位矩阵 view，然后构造一个平移矩阵 translate，
+// 该矩阵将物体沿着负的观察者位置方向平移，从而实现视图变换。
+// 最后，返回平移后的视图矩阵。
 Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
 {
     Eigen::Matrix4f view = Eigen::Matrix4f::Identity();
 
     Eigen::Matrix4f translate;
-    translate << 1, 0, 0, -eye_pos[0], 0, 1, 0, -eye_pos[1], 0, 0, 1,
-        -eye_pos[2], 0, 0, 0, 1;
+    translate << 1, 0, 0, -eye_pos[0], 
+                 0, 1, 0, -eye_pos[1], 
+                 0, 0, 1, -eye_pos[2], 
+                 0, 0, 0, 1;
 
     view = translate * view;
 
@@ -26,6 +33,16 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
     // TODO: Implement this function
     // Create the model matrix for rotating the triangle around the Z axis.
     // Then return it.
+    float rad = rotation_angle * MY_PI / 180.0;
+    model << cos(rad), -sin(rad), 0, 0,
+             sin(rad),  cos(rad), 0, 0,
+             0,         0,        1, 0,
+             0,         0,        0, 1;
+
+    // 添加缩放因子
+    float scale_factor = 20.0; // 根据需要调整缩放因子
+    model(0, 0) *= scale_factor;
+    model(1, 1) *= scale_factor;
 
     return model;
 }
@@ -33,13 +50,20 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
                                       float zNear, float zFar)
 {
-    // Students will implement this function
-
     Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
 
     // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
+    float t = zNear * tan(eye_fov * MY_PI / 360.0);
+    float r = t * aspect_ratio;
+    float l = -r;
+    float b = -t;
+    
+    projection << zNear, 0, 0, 0,
+                    0, zNear, 0, 0,
+                    0, 0, zNear + zFar, -zNear * zFar,
+                    0, 0, 1, 0;
 
     return projection;
 }
