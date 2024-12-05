@@ -3,8 +3,33 @@
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
 #include <opencv4/opencv2/opencv.hpp>
+#include <eigen3/Eigen/Geometry> // 引入Eigen的几何模块
 
 constexpr double MY_PI = 3.1415926;
+Eigen::Matrix4f get_rotation(Eigen::Vector3f axis, float angle) {
+    Eigen::Matrix4f rotation = Eigen::Matrix4f::Identity();
+
+    // 将角度转换为弧度
+    float rad = angle * MY_PI / 180.0;
+
+    // 归一化旋转轴
+    axis.normalize();
+
+    // 计算罗德里格斯公式的各个部分
+    Eigen::Matrix3f K;
+    K << 0, -axis[2], axis[1],
+         axis[2], 0, -axis[0],
+         -axis[1], axis[0], 0;
+
+    Eigen::Matrix3f I = Eigen::Matrix3f::Identity();
+    Eigen::Matrix3f R = I + sin(rad) * K + (1 - cos(rad)) * (K * K);
+    Eigen::Matrix3f R1 = cos(rad) * I+(1-cos(rad))*(axis*axis.transpose())+sin(rad)*K;
+
+    // 将3x3旋转矩阵扩展到4x4矩阵
+    rotation.block<3, 3>(0, 0) = R;
+
+    return rotation;
+}
 
 // 该函数用于获取视图矩阵，视图矩阵用于将场景中的物体从世界坐标系转换到视图坐标系。
 // 输入参数 eye_pos 是一个三维向量，表示观察者的位置。
@@ -39,10 +64,10 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
              0,         0,        1, 0,
              0,         0,        0, 1;
 
-    // 添加缩放因子
-    float scale_factor = 20.0; // 根据需要调整缩放因子
-    model(0, 0) *= scale_factor;
-    model(1, 1) *= scale_factor;
+    // // 添加缩放因子
+    // float scale_factor = 20.0; // 根据需要调整缩放因子
+    // model(0, 0) *= scale_factor;
+    // model(1, 1) *= scale_factor;
 
     return model;
 }
@@ -55,17 +80,27 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
-    float t = zNear * tan(eye_fov * MY_PI / 360.0);
-    float r = t * aspect_ratio;
-    float l = -r;
-    float b = -t;
-    
+    //转换为正交投影矩阵
     projection << zNear, 0, 0, 0,
                     0, zNear, 0, 0,
                     0, 0, zNear + zFar, -zNear * zFar,
                     0, 0, 1, 0;
-
-    return projection;
+    float t = (-zNear) * tan(eye_fov * MY_PI / 180.0/2);
+    float r = t * aspect_ratio;
+    float l = -r;
+    float b = -t; 
+    //转换到正则正方体
+    Eigen::Matrix4f Mortho,Mtrans,Mscale;
+    Mtrans << 1, 0, 0, -(r+l)/2,
+               0, 1, 0, -(t+b)/2,
+               0, 0, 1, -(zNear+zFar)/2,
+               0, 0, 0, 1;
+    Mscale << 2/(r-l), 0, 0, 0,
+               0, 2/(t-b), 0, 0,
+               0, 0, 2/(zNear-zFar), 0,
+               0, 0, 0, 1;
+    Mortho = Mscale * Mtrans;
+    return Mortho * projection;
 }
 
 int main(int argc, const char** argv)
